@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Button } from 'react-native-paper';
+import Illustration from './Illustration';
 
 export default function EmptyState({ onAddPress, onSamplePress }) {
   return (
