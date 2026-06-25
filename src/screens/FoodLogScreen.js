@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, FlatList, StyleSheet, Image, Alert } from 'react-native';
+import { View, FlatList, StyleSheet, Image, Alert, ActivityIndicator } from 'react-native';
 import { FAB, Appbar, Card, Paragraph, IconButton } from 'react-native-paper';
 import FoodEntryForm from '../components/FoodEntryForm';
 import { loadFoodEntries, saveFoodEntry, deleteFoodEntry } from '../services/storage';
@@ -9,7 +9,6 @@ export default function FoodLogScreen() {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // アプリ起動時にデータを読み込む
   useEffect(() => {
     loadEntries();
   }, []);
@@ -47,7 +46,7 @@ export default function FoodLogScreen() {
           onPress: async () => {
             try {
               await deleteFoodEntry(id);
-              setEntries(prev => prev.filter(entry => entry.id !== id));
+              setEntries(prev => prev.filter(entry => String(entry.id) !== String(id)));
             } catch (error) {
               Alert.alert('エラー', '削除に失敗しました');
             }
@@ -63,20 +62,26 @@ export default function FoodLogScreen() {
         <Appbar.Content title="食事ログ" />
       </Appbar.Header>
 
-      {showForm ? (
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" />
+        </View>
+      ) : showForm ? (
         <FoodEntryForm onSubmit={addEntry} onCancel={() => setShowForm(false)} />
       ) : (
         <FlatList
           data={entries}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => (
             <Card style={styles.card}>
               {item.photoUri ? <Image source={{ uri: item.photoUri }} style={styles.photo} /> : null}
               <Card.Content>
-                <Paragraph style={styles.title}>{item.name}</Paragraph>
-                <Paragraph>カロリー: {item.calories || '未入力'} kcal</Paragraph>
+                <Paragraph style={styles.title}>{item.name || '無題'}</Paragraph>
+                <Paragraph>カロリー: {item.calories ?? '未入力'} kcal</Paragraph>
                 {item.note ? <Paragraph>{item.note}</Paragraph> : null}
-                <Paragraph style={styles.date}>{new Date(item.createdAt).toLocaleString('ja-JP')}</Paragraph>
+                <Paragraph style={styles.date}>
+                  {item.createdAt ? new Date(item.createdAt).toLocaleString('ja-JP') : '日時不明'}
+                </Paragraph>
               </Card.Content>
               <Card.Actions>
                 <IconButton
@@ -98,6 +103,7 @@ export default function FoodLogScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   fab: { position: 'absolute', right: 16, bottom: 16 },
   card: { margin: 8 },
   photo: { width: '100%', height: 180 },
