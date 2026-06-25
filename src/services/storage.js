@@ -74,3 +74,72 @@ export async function updateFoodEntry(id, updates) {
     throw error;
   }
 }
+
+/**
+ * 指定された日付の食事記録を取得する
+ * @param {Date} date - 対象日付
+ * @returns {Promise<Array>} その日の食事記録
+ */
+export async function getFoodEntriesByDate(date) {
+  try {
+    const entries = await loadFoodEntries();
+    const targetDate = new Date(date).toDateString();
+    
+    return entries.filter(entry => {
+      const entryDate = new Date(entry.createdAt).toDateString();
+      return entryDate === targetDate;
+    });
+  } catch (error) {
+    console.error('Failed to get food entries by date:', error);
+    return [];
+  }
+}
+
+/**
+ * 指定された日付の栄養合計を計算する
+ * @param {Date} date - 対象日付
+ * @returns {Promise<Object>} 栄養合計
+ */
+export async function getDailySummary(date) {
+  try {
+    const entries = await getFoodEntriesByDate(date);
+    
+    const summary = entries.reduce(
+      (acc, entry) => ({
+        calories: acc.calories + (entry.calories || 0),
+        protein: acc.protein + (entry.protein || 0),
+        carbs: acc.carbs + (entry.carbs || 0),
+        fat: acc.fat + (entry.fat || 0),
+        count: acc.count + 1,
+      }),
+      { calories: 0, protein: 0, carbs: 0, fat: 0, count: 0 }
+    );
+    
+    return summary;
+  } catch (error) {
+    console.error('Failed to get daily summary:', error);
+    return { calories: 0, protein: 0, carbs: 0, fat: 0, count: 0 };
+  }
+}
+
+/**
+ * 指定された期間の栄養データを取得する
+ * @param {Date} startDate - 開始日
+ * @param {Date} endDate - 終了日
+ * @returns {Promise<Array>} 期間内の食事記録
+ */
+export async function getFoodEntriesByDateRange(startDate, endDate) {
+  try {
+    const entries = await loadFoodEntries();
+    const start = new Date(startDate).getTime();
+    const end = new Date(endDate).getTime();
+    
+    return entries.filter(entry => {
+      const entryTime = new Date(entry.createdAt).getTime();
+      return entryTime >= start && entryTime <= end;
+    });
+  } catch (error) {
+    console.error('Failed to get food entries by date range:', error);
+    return [];
+  }
+}
