@@ -1,0 +1,211 @@
+kentamano-diet-app/
+├─ README.md
+├─ .gitignore
+├─ package.json
+├─ app.json
+├─ App.js
+└─ src/
+   ├─ screens/
+   │  └─ FoodLogScreen.js
+   ├─ components/
+   │  └─ FoodEntryForm.js
+   └─ services/
+      └─ api.js
+# kentamano-diet-app
+
+MVP: 食事ログ機能（写真アップロード＋手入力）を中心としたダイエットアプリのプロトタイプ。
+
+## 目的
+- 20代後半〜30代女性向けの使いやすい食事記録アプリを短期間で検証する。
+
+## 技術スタック（MVP）
+- Frontend: React Native (Expo)
+- Backend: Node.js + Express (後続で追加)
+- DB: PostgreSQL / SQLite（開発時はローカル or Expo SecureStore）
+
+## セットアップ（ローカル）
+1. Node.js と npm をインストール
+2. `npm install -g expo-cli`
+3. `npm install`
+4. `expo start`
+
+## まずの目標
+- 食事ログ（写真＋手入力）
+- カロリー表示（手入力ベース）
+- ローカル保存（後で同期）
+
+node_modules
+.expo
+.expo-shared
+.env
+dist
+build
+
+{
+  "name": "kentamano-diet-app",
+  "version": "0.1.0",
+  "private": true,
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "expo": "~48.0.0",
+    "expo-image-picker": "~14.0.1",
+    "expo-status-bar": "~1.4.0",
+    "react": "18.2.0",
+    "react-native": "0.71.8",
+    "react-native-paper": "^5.0.0"
+  }
+}
+
+{
+  "expo": {
+    "name": "kentamano-diet-app",
+    "slug": "kentamano-diet-app",
+    "version": "1.0.0",
+    "sdkVersion": "48.0.0"
+  }
+}
+
+import React from 'react';
+import { Provider as PaperProvider } from 'react-native-paper';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import FoodLogScreen from './src/screens/FoodLogScreen';
+import { StatusBar } from 'expo-status-bar';
+
+const Stack = createStackNavigator();
+
+export default function App() {
+  return (
+    <PaperProvider>
+      <NavigationContainer>
+        <Stack.Navigator>
+          <Stack.Screen name="FoodLog" component={FoodLogScreen} options={{ title: '食事ログ' }} />
+        </Stack.Navigator>
+      </NavigationContainer>
+      <StatusBar style="auto" />
+    </PaperProvider>
+  );
+}
+
+import React, { useState } from 'react';
+import { View, FlatList, StyleSheet, Image } from 'react-native';
+import { FAB, Appbar, Card, Paragraph } from 'react-native-paper';
+import FoodEntryForm from '../components/FoodEntryForm';
+
+export default function FoodLogScreen() {
+  const [entries, setEntries] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+
+  const addEntry = (entry) => {
+    setEntries(prev => [entry, ...prev]);
+    setShowForm(false);
+  };
+
+  return (
+    <View style={styles.container}>
+      <Appbar.Header>
+        <Appbar.Content title="食事ログ" />
+      </Appbar.Header>
+
+      {showForm ? (
+        <FoodEntryForm onSubmit={addEntry} onCancel={() => setShowForm(false)} />
+      ) : (
+        <FlatList
+          data={entries}
+          keyExtractor={(item, idx) => idx.toString()}
+          renderItem={({ item }) => (
+            <Card style={styles.card}>
+              {item.photoUri ? <Image source={{ uri: item.photoUri }} style={styles.photo} /> : null}
+              <Card.Content>
+                <Paragraph>{item.name}</Paragraph>
+                <Paragraph>カロリー: {item.calories || '未入力'} kcal</Paragraph>
+                <Paragraph>{item.note}</Paragraph>
+              </Card.Content>
+            </Card>
+          )}
+          ListEmptyComponent={<Paragraph style={{ padding: 16 }}>まだ記録がありません。＋ボタンで追加してください。</Paragraph>}
+        />
+      )}
+
+      <FAB style={styles.fab} icon="plus" onPress={() => setShowForm(true)} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  fab: { position: 'absolute', right: 16, bottom: 16 },
+  card: { margin: 8 },
+  photo: { width: '100%', height: 180 }
+});
+
+import React, { useState } from 'react';
+import { View, StyleSheet, Image } from 'react-native';
+import { TextInput, Button, IconButton } from 'react-native-paper';
+import * as ImagePicker from 'expo-image-picker';
+
+export default function FoodEntryForm({ onSubmit, onCancel }) {
+  const [name, setName] = useState('');
+  const [calories, setCalories] = useState('');
+  const [note, setNote] = useState('');
+  const [photoUri, setPhotoUri] = useState(null);
+
+  const pickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) return;
+    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.6, base64: false });
+    if (!result.cancelled) setPhotoUri(result.uri);
+  };
+
+  const takePhoto = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) return;
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.6 });
+    if (!result.cancelled) setPhotoUri(result.uri);
+  };
+
+  const submit = () => {
+    onSubmit({ name, calories, note, photoUri, createdAt: new Date().toISOString() });
+    setName(''); setCalories(''); setNote(''); setPhotoUri(null);
+  };
+
+  return (
+    <View style={styles.container}>
+      <TextInput label="料理名" value={name} onChangeText={setName} style={styles.input} />
+      <TextInput label="カロリー (kcal)" value={calories} onChangeText={setCalories} keyboardType="numeric" style={styles.input} />
+      <TextInput label="メモ" value={note} onChangeText={setNote} style={styles.input} multiline />
+      {photoUri ? <Image source={{ uri: photoUri }} style={styles.photo} /> : null}
+      <View style={styles.row}>
+        <Button mode="outlined" onPress={pickImage}>写真を選択</Button>
+        <Button mode="outlined" onPress={takePhoto}>写真を撮る</Button>
+      </View>
+      <View style={styles.row}>
+        <Button mode="contained" onPress={submit}>保存</Button>
+        <Button onPress={onCancel}>キャンセル</Button>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { padding: 12 },
+  input: { marginBottom: 8 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
+  photo: { width: '100%', height: 200, marginTop: 8 }
+});
+
+// 将来的にバックエンドと同期するための簡易ラッパー
+const API_BASE = 'https://your-backend.example.com/api';
+
+export async function uploadFoodEntry(entry) {
+  // TODO: 実装（multipart/form-dataで写真を送る等）
+  // 現状はローカル保存のみ
+  return { success: true };
+}
+
