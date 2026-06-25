@@ -1,145 +1,57 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const STORAGE_KEY = 'FOOD_ENTRIES';
+const STORAGE_KEY = '@kentamano_food_entries';
 
-/**
- * すべての食事ログを取得
- */
+const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
 export async function loadFoodEntries() {
   try {
-    const jsonString = await AsyncStorage.getItem(STORAGE_KEY);
-    return jsonString ? JSON.parse(jsonString) : [];
-  } catch (error) {
-    console.error('Failed to load food entries:', error);
-    return [];
+    const raw = await AsyncStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.warn('loadFoodEntries error', e);
+    throw e;
   }
 }
 
-/**
- * 新しい食事ログを追加（既存データを保持）
- */
 export async function saveFoodEntry(entry) {
   try {
     const entries = await loadFoodEntries();
+    const now = new Date().toISOString();
     const newEntry = {
-      ...entry,
-      id: Date.now().toString(), // ユニークIDを自動生成
+      id: genId(),
+      createdAt: now,
+      ...entry
     };
-    const updatedEntries = [newEntry, ...entries];
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedEntries));
+    const newEntries = [newEntry, ...entries];
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newEntries));
     return newEntry;
-  } catch (error) {
-    console.error('Failed to save food entry:', error);
-    throw error;
+  } catch (e) {
+    console.warn('saveFoodEntry error', e);
+    throw e;
   }
 }
 
-/**
- * すべてのデータを削除（デバッグ用）
- */
-export async function clearAllEntries() {
-  try {
-    await AsyncStorage.removeItem(STORAGE_KEY);
-  } catch (error) {
-    console.error('Failed to clear entries:', error);
-  }
-}
-
-/**
- * IDで食事ログを削除
- */
 export async function deleteFoodEntry(id) {
   try {
     const entries = await loadFoodEntries();
-    const filtered = entries.filter(entry => entry.id !== id);
+    const filtered = entries.filter(e => String(e.id) !== String(id));
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
-  } catch (error) {
-    console.error('Failed to delete entry:', error);
-    throw error;
+    return true;
+  } catch (e) {
+    console.warn('deleteFoodEntry error', e);
+    throw e;
   }
 }
 
-/**
- * IDで食事ログを更新
- */
-export async function updateFoodEntry(id, updates) {
+export async function clearAllEntries() {
   try {
-    const entries = await loadFoodEntries();
-    const updated = entries.map(entry =>
-      entry.id === id ? { ...entry, ...updates } : entry
-    );
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-  } catch (error) {
-    console.error('Failed to update entry:', error);
-    throw error;
-  }
-}
-
-/**
- * 指定された日付の食事記録を取得する
- * @param {Date} date - 対象日付
- * @returns {Promise<Array>} その日の食事記録
- */
-export async function getFoodEntriesByDate(date) {
-  try {
-    const entries = await loadFoodEntries();
-    const targetDate = new Date(date).toDateString();
-    
-    return entries.filter(entry => {
-      const entryDate = new Date(entry.createdAt).toDateString();
-      return entryDate === targetDate;
-    });
-  } catch (error) {
-    console.error('Failed to get food entries by date:', error);
-    return [];
-  }
-}
-
-/**
- * 指定された日付の栄養合計を計算する
- * @param {Date} date - 対象日付
- * @returns {Promise<Object>} 栄養合計
- */
-export async function getDailySummary(date) {
-  try {
-    const entries = await getFoodEntriesByDate(date);
-    
-    const summary = entries.reduce(
-      (acc, entry) => ({
-        calories: acc.calories + (entry.calories || 0),
-        protein: acc.protein + (entry.protein || 0),
-        carbs: acc.carbs + (entry.carbs || 0),
-        fat: acc.fat + (entry.fat || 0),
-        count: acc.count + 1,
-      }),
-      { calories: 0, protein: 0, carbs: 0, fat: 0, count: 0 }
-    );
-    
-    return summary;
-  } catch (error) {
-    console.error('Failed to get daily summary:', error);
-    return { calories: 0, protein: 0, carbs: 0, fat: 0, count: 0 };
-  }
-}
-
-/**
- * 指定された期間の栄養データを取得する
- * @param {Date} startDate - 開始日
- * @param {Date} endDate - 終了日
- * @returns {Promise<Array>} 期間内の食事記録
- */
-export async function getFoodEntriesByDateRange(startDate, endDate) {
-  try {
-    const entries = await loadFoodEntries();
-    const start = new Date(startDate).getTime();
-    const end = new Date(endDate).getTime();
-    
-    return entries.filter(entry => {
-      const entryTime = new Date(entry.createdAt).getTime();
-      return entryTime >= start && entryTime <= end;
-    });
-  } catch (error) {
-    console.error('Failed to get food entries by date range:', error);
-    return [];
+    await AsyncStorage.removeItem(STORAGE_KEY);
+    return true;
+  } catch (e) {
+    console.warn('clearAllEntries error', e);
+    throw e;
   }
 }
