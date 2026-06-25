@@ -57,6 +57,42 @@ export default function FoodLogScreen() {
     );
   };
 
+  const insertSampleData = async () => {
+  try {
+    const samples = [
+      {
+        name: '和風朝食',
+        calories: 420,
+        protein: 18,
+        carbs: 55,
+        fat: 12,
+        note: '味噌汁と焼き魚',
+        photoUri: null
+      },
+      {
+        name: 'サラダランチ',
+        calories: 350,
+        protein: 10,
+        carbs: 30,
+        fat: 18,
+        note: 'ドレッシングは別添え',
+        photoUri: null
+      }
+    ];
+
+    const saved = [];
+    for (const s of samples) {
+      const e = await saveFoodEntry(s);
+      saved.push(e);
+    }
+    // 画面に即時反映（先頭に追加）
+    setEntries(prev => [...saved, ...prev]);
+  } catch (err) {
+    console.warn('insertSampleData error', err);
+    Alert.alert('エラー', 'サンプルデータの挿入に失敗しました');
+  }
+};
+
   return (
     <View style={styles.container}>
       <Appbar.Header>
@@ -93,7 +129,12 @@ export default function FoodLogScreen() {
               </Card.Actions>
             </Card>
           )}
-          ListEmptyComponent={<Paragraph style={{ padding: 16 }}>まだ記録がありません。＋ボタンで追加してください。</Paragraph>}
+ListEmptyComponent={
+  <EmptyState
+    onAddPress={() => setShowForm(true)}
+    onSamplePress={() => insertSampleData()}
+  />
+}
         />
       )}
 
