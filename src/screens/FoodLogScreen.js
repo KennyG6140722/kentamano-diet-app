@@ -1,3 +1,4 @@
+import EmptyState from '../components/EmptyState';
 import React, { useState, useEffect } from 'react';
 import { View, FlatList, StyleSheet, Image, Alert, ActivityIndicator } from 'react-native';
 import { FAB, Appbar, Card, Paragraph, IconButton } from 'react-native-paper';
