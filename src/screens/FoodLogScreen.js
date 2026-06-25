@@ -15,15 +15,20 @@ export default function FoodLogScreen() {
   }, []);
 
   const loadEntries = async () => {
-    try {
-      const savedEntries = await loadFoodEntries();
-      setEntries(savedEntries);
-    } catch (error) {
-      Alert.alert('エラー', 'データの読み込みに失敗しました');
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const savedEntries = await loadFoodEntries();
+    // savedEntries が配列であることを確認してからソート
+    const sorted = Array.isArray(savedEntries)
+      ? savedEntries.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+      : [];
+    setEntries(sorted);
+  } catch (error) {
+    console.warn('loadEntries error', error);
+    Alert.alert('エラー', 'データの読み込みに失敗しました');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const addEntry = async (entry) => {
     try {
