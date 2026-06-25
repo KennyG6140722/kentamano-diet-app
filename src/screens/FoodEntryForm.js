@@ -20,7 +20,6 @@ export default function FoodEntryForm({ onSubmit, onCancel }) {
   const [photoUri, setPhotoUri] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // メディアライブラリの権限を確認して画像を選択
   const pickImage = async () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -45,7 +44,6 @@ export default function FoodEntryForm({ onSubmit, onCancel }) {
     }
   };
 
-  // カメラで撮影する場合（実機でのみ動作）
   const takePhoto = async () => {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -69,25 +67,19 @@ export default function FoodEntryForm({ onSubmit, onCancel }) {
     }
   };
 
-  // 写真を削除
-  const removePhoto = () => {
-    setPhotoUri(null);
-  };
+  const removePhoto = () => setPhotoUri(null);
 
-  // フォームを送信（id/createdAt はここで作らない）
   const handleSubmit = () => {
     if (!name.trim()) {
       Alert.alert('入力エラー', '食事の名前を入力してください');
       return;
     }
-
     if (!calories.trim()) {
       Alert.alert('入力エラー', 'カロリーを入力してください');
       return;
     }
 
     setLoading(true);
-
     try {
       const entry = {
         name: name.trim(),
@@ -97,7 +89,6 @@ export default function FoodEntryForm({ onSubmit, onCancel }) {
         fat: Number(fat) || 0,
         note: note.trim(),
         photoUri,
-        // createdAt と id は保存側で付与する想定
       };
 
       onSubmit(entry);
