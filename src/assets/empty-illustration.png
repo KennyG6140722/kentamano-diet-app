@@ -1,1 +1,88 @@
 npx expo start -c
+<Image
+  source={require('../assets/empty-illustration.png')}
+  style={styles.illustration}
+  resizeMode="contain"
+  accessible
+  accessibilityLabel="空の食事記録のイラスト"
+/>
+import React, { useState } from 'react';
+import { View, Image, Text, StyleSheet } from 'react-native';
+
+export default function Illustration({ style, accessibilityLabel }) {
+  const [error, setError] = useState(false);
+  const local = require('../assets/empty-illustration.png');
+
+  if (error) {
+    return (
+      <View style={[styles.fallbackContainer, style]}>
+        <Text style={styles.fallbackText}>イラストを読み込めませんでした</Text>
+      </View>
+    );
+  }
+
+  return (
+    <Image
+      source={local}
+      style={[styles.illustration, style]}
+      resizeMode="contain"
+      onError={() => setError(true)}
+      accessible
+      accessibilityLabel={accessibilityLabel || '空の食事記録のイラスト'}
+    />
+  );
+}
+
+const styles = StyleSheet.create({
+  illustration: { width: 220, height: 160 },
+  fallbackContainer: { width: 220, height: 160, alignItems: 'center', justifyContent: 'center' },
+  fallbackText: { color: '#666', textAlign: 'center' }
+});
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { Button } from 'react-native-paper';
+import Illustration from './Illustration'; // 上の Illustration コンポーネントを同ディレクトリに置く想定
+
+export default function EmptyState({ onAddPress, onSamplePress }) {
+  return (
+    <View style={styles.container}>
+      <Illustration style={styles.illustration} accessibilityLabel="空の食事記録のイラスト" />
+
+      <Text style={styles.title}>まだ記録がありません</Text>
+      <Text style={styles.subtitle}>
+        写真を撮るか、手入力で食事を記録してみましょう。続けるほど習慣になります。
+      </Text>
+
+      <View style={styles.actions}>
+        <Button
+          mode="contained"
+          onPress={onAddPress}
+          style={styles.primary}
+          accessibilityLabel="記録を追加する"
+        >
+          記録を追加する
+        </Button>
+
+        <Button
+          mode="text"
+          onPress={onSamplePress}
+          accessibilityLabel="サンプルを挿入して試す"
+        >
+          サンプルを挿入して試す
+        </Button>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  illustration: { width: 220, height: 160, marginBottom: 20 },
+  title: { fontSize: 18, fontWeight: '700', marginBottom: 8, textAlign: 'center' },
+  subtitle: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 20 },
+  actions: { width: '100%', alignItems: 'center' },
+  primary: { width: '70%', marginBottom: 12 },
+});
+import EmptySvg from '../assets/empty-illustration.svg';
+...
+<EmptySvg width={220} height={160} />
