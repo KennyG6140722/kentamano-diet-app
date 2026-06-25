@@ -7,6 +7,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 // スクリーンのインポート
 import HomeScreen from './screens/HomeScreen';
 import FoodLogScreen from './screens/FoodLogScreen';
+import StatisticsScreen from './screens/StatisticsScreen';
 import SettingsScreen from './screens/SettingsScreen';
 
 const Stack = createNativeStackNavigator();
@@ -38,6 +39,19 @@ function FoodLogStack() {
   );
 }
 
+// 統計スタック
+function StatisticsStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen name="StatisticsMain" component={StatisticsScreen} />
+    </Stack.Navigator>
+  );
+}
+
 // ボトムタブナビゲーション
 function TabNavigator() {
   return (
@@ -51,6 +65,8 @@ function TabNavigator() {
             iconName = 'home';
           } else if (route.name === 'FoodLog') {
             iconName = 'food-apple';
+          } else if (route.name === 'Statistics') {
+            iconName = 'chart-line';
           } else if (route.name === 'Settings') {
             iconName = 'cog';
           }
@@ -80,6 +96,13 @@ function TabNavigator() {
         component={FoodLogStack}
         options={{
           title: '食事ログ',
+        }}
+      />
+      <Tab.Screen
+        name="Statistics"
+        component={StatisticsStack}
+        options={{
+          title: '統計',
         }}
       />
       <Tab.Screen
